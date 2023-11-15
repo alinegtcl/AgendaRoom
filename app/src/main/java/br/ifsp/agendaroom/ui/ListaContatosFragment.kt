@@ -13,16 +13,13 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import br.ifsp.agendaroom.R
 import br.ifsp.agendaroom.adapter.ContatoAdapter
-import br.ifsp.agendaroom.data.Contato
-import br.ifsp.agendaroom.data.ContatoDatabase
 import br.ifsp.agendaroom.databinding.FragmentListaContatosBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import br.ifsp.agendaroom.viewmodel.ContatoViewModel
 
 class ListaContatosFragment : Fragment(){
 
@@ -30,9 +27,9 @@ class ListaContatosFragment : Fragment(){
 
     private val binding get() = _binding!!
 
-
     lateinit var contatoAdapter: ContatoAdapter
 
+    lateinit var viewModel: ContatoViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,16 +42,18 @@ class ListaContatosFragment : Fragment(){
     ): View? {
         // Inflate the layout for this fragment
         _binding = FragmentListaContatosBinding.inflate(inflater, container, false)
-        val root: View = binding.root
 
         binding.fab.setOnClickListener { findNavController().navigate(R.id.action_listaContatosFragment_to_cadastroFragment) }
 
-        return root
+        return binding.root
+
     }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        configureRecyclerView()
 
         val menuHost: MenuHost = requireActivity()
 
@@ -85,50 +84,38 @@ class ListaContatosFragment : Fragment(){
     }
 
 
-    override fun onResume() {
-        super.onResume()
-        updateUI()
-
-    }
-
-
-    private fun updateUI()
+    private fun configureRecyclerView()
     {
-        val db = ContatoDatabase.getDatabase(requireActivity().applicationContext)
-        var contatosLista : List<Contato>
 
-        val recyclerView = binding.recyclerview
+        viewModel = ViewModelProvider(this).get(ContatoViewModel::class.java)
 
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-
-        CoroutineScope(Dispatchers.IO).launch {
-            contatosLista = db.contatoDAO().listarContatos()
-            contatoAdapter = ContatoAdapter(contatosLista)
-
-            recyclerView.adapter = contatoAdapter
-
-                val listener = object : ContatoAdapter.ContatoListener {
-                    override fun onItemClick(pos: Int) {
-                        val c = contatoAdapter.contatosListaFilterable[pos]
-
-                        val bundle = Bundle()
-                        bundle.putSerializable("contato", c)
-
-                        findNavController().navigate(
-                            R.id.action_listaContatosFragment_to_detalheFragment,
-                            bundle
-                        )
-
-                    }
-                }
-                contatoAdapter.setClickListener(listener)
-
-
-
+        viewModel.allContacts.observe(viewLifecycleOwner) { list ->
+            list?.let {
+                contatoAdapter.updateList(list)
+            }
         }
 
-    }
+        val recyclerView = binding.recyclerview
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        contatoAdapter = ContatoAdapter()
+        recyclerView.adapter = contatoAdapter
+
+        val listener = object : ContatoAdapter.ContatoListener {
+            override fun onItemClick(pos: Int) {
+                val c = contatoAdapter.contatosListaFilterable[pos]
+
+                val bundle = Bundle()
+                bundle.putInt("idContato", c.id)
+
+                findNavController().navigate(
+                    R.id.action_listaContatosFragment_to_detalheFragment,
+                    bundle
+                )
+
+            }
+        }
+        contatoAdapter.setClickListener(listener)
+           }
 
 }
 

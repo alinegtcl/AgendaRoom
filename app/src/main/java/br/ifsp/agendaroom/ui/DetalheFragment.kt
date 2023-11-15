@@ -12,31 +12,31 @@ import android.widget.EditText
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import br.ifsp.agendaroom.R
 import br.ifsp.agendaroom.data.Contato
-import br.ifsp.agendaroom.data.ContatoDatabase
 import br.ifsp.agendaroom.databinding.FragmentDetalheBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import br.ifsp.agendaroom.viewmodel.ContatoViewModel
+import com.google.android.material.snackbar.Snackbar
 
 
 class DetalheFragment : Fragment() {
     private var _binding: FragmentDetalheBinding? = null
-
     private val binding get() = _binding!!
 
     lateinit var contato: Contato
 
+    lateinit  var nomeEditText: EditText
+    lateinit var foneEditText: EditText
+    lateinit var emailEditText: EditText
 
-    lateinit  var nome: EditText
-    lateinit var fone: EditText
-    lateinit var email: EditText
+    lateinit var viewModel: ContatoViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        viewModel = ViewModelProvider(this).get(ContatoViewModel::class.java)
     }
 
     override fun onCreateView(
@@ -45,24 +45,30 @@ class DetalheFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         _binding = FragmentDetalheBinding.inflate(inflater, container, false)
-        val root: View = binding.root
 
-        return root
+        return binding.root
     }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        contato = requireArguments().getSerializable("contato",Contato::class.java) as Contato
+        nomeEditText = binding.commonLayout.editTextNome
+        foneEditText = binding.commonLayout.editTextFone
+        emailEditText = binding.commonLayout.editTextEmail
 
-        nome = binding.commonLayout.editTextNome
-        fone = binding.commonLayout.editTextFone
-        email = binding.commonLayout.editTextEmail
+        val idContato = requireArguments().getInt("idContato")
 
-        nome.setText(contato.nome)
-        fone.setText(contato.fone)
-        email.setText(contato.email)
+        viewModel.getContactById(idContato)
+
+        viewModel.contato.observe(viewLifecycleOwner) { result ->
+            result?.let {
+                contato = result
+                nomeEditText.setText(contato.nome)
+                foneEditText.setText(contato.fone)
+                emailEditText.setText(contato.email)
+            }
+        }
 
         val menuHost: MenuHost = requireActivity()
 
@@ -76,24 +82,23 @@ class DetalheFragment : Fragment() {
                 // Handle the menu selection
                 return when (menuItem.itemId) {
                     R.id.action_alterarContato -> {
-                        val db = ContatoDatabase.getDatabase(requireActivity().applicationContext)
 
-                        val contatoUpdate=Contato(contato.id,nome.text.toString(),fone.text.toString(),email.text.toString())
+                        contato.nome=nomeEditText.text.toString()
+                        contato.fone=foneEditText.text.toString()
+                        contato.email=emailEditText.text.toString()
 
-                        CoroutineScope(Dispatchers.IO).launch {
-                            db.contatoDAO().atualizarContato(contatoUpdate)
-                        }
+                        viewModel.update(contato)
+
+                        Snackbar.make(binding.root, "Contato alterado", Snackbar.LENGTH_SHORT).show()
 
                         findNavController().popBackStack()
                         true
                     }
                     R.id.action_excluirContato ->{
+                        viewModel.delete(contato)
 
-                        val db = ContatoDatabase.getDatabase(requireActivity().applicationContext)
+                        Snackbar.make(binding.root, "Contato apagado", Snackbar.LENGTH_SHORT).show()
 
-                        CoroutineScope(Dispatchers.IO).launch {
-                            db.contatoDAO().apagarContato(contato)
-                        }
                         findNavController().popBackStack()
                         true
                     }

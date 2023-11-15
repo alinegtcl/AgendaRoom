@@ -8,17 +8,20 @@ import androidx.recyclerview.widget.RecyclerView
 import br.ifsp.agendaroom.data.Contato
 import br.ifsp.agendaroom.databinding.ContatoCelulaBinding
 
-class ContatoAdapter(val contatosLista:List<Contato>): RecyclerView.Adapter<ContatoAdapter.ContatoViewHolder>(),
+class ContatoAdapter: RecyclerView.Adapter<ContatoAdapter.ContatoViewHolder>(),
     Filterable {
 
     var listener: ContatoListener?=null
 
-    var contatosListaFilterable : List<Contato>
+    var contatosLista = ArrayList<Contato>()
+    var contatosListaFilterable = ArrayList<Contato>()
 
     private lateinit var binding: ContatoCelulaBinding
 
-    init {
-        this.contatosListaFilterable = contatosLista
+    fun updateList(newList: List<Contato> ){
+        contatosLista = newList as ArrayList<Contato>
+        contatosListaFilterable = contatosLista
+        notifyDataSetChanged()
     }
 
     fun setClickListener(listener: ContatoListener)
@@ -82,7 +85,7 @@ class ContatoAdapter(val contatosLista:List<Contato>): RecyclerView.Adapter<Cont
             }
 
             override fun publishResults(p0: CharSequence?, p1: FilterResults?) {
-                contatosListaFilterable = p1?.values as List<Contato>
+                contatosListaFilterable = p1?.values as ArrayList<Contato>
                 notifyDataSetChanged()
             }
 

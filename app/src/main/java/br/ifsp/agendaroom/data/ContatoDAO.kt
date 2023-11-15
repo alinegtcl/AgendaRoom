@@ -1,5 +1,6 @@
 package br.ifsp.agendaroom.data
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -10,15 +11,19 @@ import androidx.room.Update
 @Dao
 interface ContatoDAO {
     @Insert
-    suspend fun inserirContato(contato: Contato)
+    suspend fun insert(contato: Contato)
 
     @Update
-    suspend fun atualizarContato (contato: Contato)
+    suspend fun update (contato: Contato)
 
     @Delete
-    suspend fun apagarContato(contato: Contato)
+    suspend fun delete(contato: Contato)
 
     @Query("SELECT * FROM contato ORDER BY nome")
-    fun listarContatos(): List<Contato>
+    fun getAllContacts(): LiveData<List<Contato>>
+
+    @Query("SELECT * FROM contato WHERE id=:id")
+    fun getContactById(id: Int): LiveData<Contato>
+
 
 }

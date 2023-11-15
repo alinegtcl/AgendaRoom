@@ -11,21 +11,26 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import br.ifsp.agendaroom.R
 import br.ifsp.agendaroom.data.Contato
-import br.ifsp.agendaroom.data.ContatoDatabase
 import br.ifsp.agendaroom.databinding.FragmentCadastroBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import br.ifsp.agendaroom.viewmodel.ContatoViewModel
+import com.google.android.material.snackbar.Snackbar
+
 
 class CadastroFragment : Fragment(){
     private var _binding: FragmentCadastroBinding? = null
     private val binding get() = _binding!!
 
+    lateinit var viewModel: ContatoViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        viewModel = ViewModelProvider(this).get(ContatoViewModel::class.java)
+
     }
 
     override fun onCreateView(
@@ -58,14 +63,11 @@ class CadastroFragment : Fragment(){
                         val fone = binding.commonLayout.editTextFone.text.toString()
                         val email = binding.commonLayout.editTextEmail.text.toString()
 
-                        val c = Contato( 0,nome, fone, email)
+                        val contato = Contato(0,nome, fone, email)
 
-                        val db = ContatoDatabase.getDatabase(requireActivity().applicationContext)
+                        viewModel.insert(contato)
 
-                        CoroutineScope(Dispatchers.IO).launch {
-                            db.contatoDAO().inserirContato(c)
-                        }
-
+                        Snackbar.make(binding.root, "Contato inserido", Snackbar.LENGTH_SHORT).show()
                         findNavController().popBackStack()
                         true
                     }
