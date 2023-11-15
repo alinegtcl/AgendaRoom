@@ -23,7 +23,6 @@ import br.ifsp.agendaroom.databinding.FragmentListaContatosBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ListaContatosFragment : Fragment(){
 
@@ -33,6 +32,7 @@ class ListaContatosFragment : Fragment(){
 
 
     lateinit var contatoAdapter: ContatoAdapter
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +51,6 @@ class ListaContatosFragment : Fragment(){
 
         return root
     }
-
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -89,26 +88,25 @@ class ListaContatosFragment : Fragment(){
     override fun onResume() {
         super.onResume()
         updateUI()
+
     }
 
 
     private fun updateUI()
     {
-
         val db = ContatoDatabase.getDatabase(requireActivity().applicationContext)
-        var contatosLista : ArrayList<Contato>
+        var contatosLista : List<Contato>
 
         val recyclerView = binding.recyclerview
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+
         CoroutineScope(Dispatchers.IO).launch {
-            contatosLista = db.contatoDAO().listarContatos() as ArrayList<Contato>
+            contatosLista = db.contatoDAO().listarContatos()
             contatoAdapter = ContatoAdapter(contatosLista)
 
-
-            withContext(Dispatchers.Main) {
-                recyclerView.adapter = contatoAdapter
+            recyclerView.adapter = contatoAdapter
 
                 val listener = object : ContatoAdapter.ContatoListener {
                     override fun onItemClick(pos: Int) {
@@ -127,9 +125,11 @@ class ListaContatosFragment : Fragment(){
                 contatoAdapter.setClickListener(listener)
 
 
-            }
+
         }
 
     }
 
 }
+
+
